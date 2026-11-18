@@ -100,7 +100,7 @@ class LibraryIntegrationTests(unittest.TestCase):
         member_id = con.execute("SELECT id FROM members WHERE member_code='NC001'").fetchone()[0]
         con.execute("UPDATE books SET available_copies=available_copies-1 WHERE id=?", (book_id,))
         cur = con.execute(
-            "INSERT INTO loans(book_id,member_id,borrowed_on,due_on) VALUES(?,?,?,?,?)".replace("?,?,?,?,?", "?,?,?,?"),
+            "INSERT INTO loans(book_id,member_id,borrowed_on,due_on) VALUES(?,?,?,?)",
             (book_id, member_id, (date.today()-timedelta(days=15)).isoformat(), (date.today()-timedelta(days=1)).isoformat())
         )
         loan_id = cur.lastrowid
@@ -133,6 +133,27 @@ class LibraryIntegrationTests(unittest.TestCase):
         con.close()
         self.assertEqual(status, "waiting")
 
+    def test_fulfil_offered_waitlist_creates_loan_without_double_decrement(self):
+        con = self.db()
+        book_id = con.execute("SELECT id FROM books WHERE isbn='9780261103344'").fetchone()[0]
+        member_id = con.execute("SELECT id FROM members WHERE member_code='NC001'").fetchone()[0]
+        con.execute("UPDATE books SET available_copies=0 WHERE id=?", (book_id,))
+        con.execute("INSERT INTO waitlist(book_id,member_id,status) VALUES(?,?,'offered')", (book_id, member_id))
+        wait_id = con.execute("SELECT last_insert_rowid()").fetchone()[0]
+        con.commit()
+        con.close()
+
+        response = self.client.post(f"/waitlists/{wait_id}/complete", follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        con = self.db()
+        available = con.execute("SELECT available_copies FROM books WHERE id=?", (book_id,)).fetchone()[0]
+        active = con.execute("SELECT COUNT(*) FROM loans WHERE book_id=? AND member_id=? AND returned_on IS NULL", (book_id, member_id)).fetchone()[0]
+        status = con.execute("SELECT status FROM waitlist WHERE id=?", (wait_id,)).fetchone()[0]
+        con.close()
+        self.assertEqual(available, 0)
+        self.assertEqual(active, 1)
+        self.assertEqual(status, "fulfilled")
+
     def test_waitlist_is_offered_in_fifo_order_on_return(self):
         con = self.db()
         book_id = con.execute("SELECT id FROM books WHERE isbn='9780261103344'").fetchone()[0]
@@ -149,8 +170,10 @@ class LibraryIntegrationTests(unittest.TestCase):
         self.client.post(f"/loans/{loan_id}/return")
         con = self.db()
         status = con.execute("SELECT status FROM waitlist WHERE id=?", (first_waiter,)).fetchone()[0]
+        available = con.execute("SELECT available_copies FROM books WHERE id=?", (book_id,)).fetchone()[0]
         con.close()
         self.assertEqual(status, "offered")
+        self.assertEqual(available, 0, "the offered copy must be reserved from general borrowing")
 
 
 if __name__ == "__main__":
