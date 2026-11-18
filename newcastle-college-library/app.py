@@ -280,6 +280,8 @@ def return_book(loan_id):
     notice = ""
     if next_waiter:
         db.execute("UPDATE waitlist SET status='offered' WHERE id=?", (next_waiter["id"],))
+        # Reserve the returned copy immediately so another borrower cannot take it.
+        db.execute("UPDATE books SET available_copies=available_copies-1 WHERE id=? AND available_copies>0", (loan["book_id"],))
         notice = f" The next person in the FIFO waitlist is {next_waiter['name']} ({next_waiter['member_code']}); staff should contact them."
     db.commit()
     flash(f"Return recorded. Fine charged: £{fine/100:.2f}.{notice}", "success")
@@ -297,13 +299,13 @@ def complete_waitlist(wait_id):
     db = get_db()
     row = db.execute("SELECT * FROM waitlist WHERE id=? AND status='offered'", (wait_id,)).fetchone()
     if not row: abort(404)
-    book = db.execute("SELECT * FROM books WHERE id=?", (row["book_id"],)).fetchone()
-    if book["available_copies"] < 1:
-        flash("No copy is currently available to fulfil this reservation.", "error")
+    active_loans = db.execute("SELECT COUNT(*) FROM loans WHERE member_id=? AND returned_on IS NULL", (row["member_id"],)).fetchone()[0]
+    if active_loans >= 5:
+        flash("This member has reached the prototype borrowing limit of five active books; the offered copy remains reserved.", "error")
     else:
+        # The copy was reserved when the waitlist offer was made.
         db.execute("INSERT INTO loans(book_id,member_id,borrowed_on,due_on) VALUES(?,?,?,?)",
                    (row["book_id"],row["member_id"],date.today().isoformat(),(date.today()+timedelta(days=14)).isoformat()))
-        db.execute("UPDATE books SET available_copies=available_copies-1 WHERE id=?", (row["book_id"],))
         db.execute("UPDATE waitlist SET status='fulfilled' WHERE id=?", (wait_id,))
         db.commit()
         flash("Reservation fulfilled and loan created.", "success")

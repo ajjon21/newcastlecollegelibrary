@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration and generated data
+.env
+.env.*
+!.env.example
+newcastle-college-library/library.db
+newcastle-college-library/*.sqlite
+newcastle-college-library/*.sqlite3
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
