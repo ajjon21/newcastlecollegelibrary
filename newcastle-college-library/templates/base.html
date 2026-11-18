@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Newcastle College Library{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head>
+<body><header><div class="wrap nav"><a class="brand" href="{{ url_for('index') }}">📚 Newcastle College Library</a><nav>
+<a href="{{ url_for('books') }}">Books</a><a href="{{ url_for('members') }}">Members</a><a href="{{ url_for('loans') }}">Loans</a><a href="{{ url_for('waitlists') }}">Waitlists</a><a href="{{ url_for('analytics') }}">Analytics</a></nav></div></header>
+<main class="wrap">{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+{% block content %}{% endblock %}</main><footer><div class="wrap">Newcastle College Library Management Prototype · Python / Flask / SQLite</div></footer></body></html>
