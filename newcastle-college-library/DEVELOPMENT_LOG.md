@@ -39,3 +39,16 @@ These are planned milestones, not historical commits. Do not assign past dates t
 - Use `git show <commit>` to show the files and code changes in a particular commit.
 - Keep screenshots, test output and design notes in the repository where appropriate.
 - Never commit real student data, passwords, API keys or the generated SQLite database.
+
+## Work completed — 18 November 2026
+
+The following entries correspond to real commits on the `feature/library-system-quality` branch:
+
+| Commit | Change |
+|---|---|
+| `8611120` | Added repository-level guidance, ignore rules and a GitHub Actions test workflow |
+| `8a7a79f` | Expanded integration tests for catalogue, members, borrowing, fines and waitlists |
+| `eec6f1d` | Fixed waitlist fairness by reserving a returned copy as soon as it is offered; applied the member loan cap when fulfilling an offer |
+| `3c6c35e` | Added regression coverage for reservation fulfilment and reserved-copy availability |
+
+A pull request was opened against `main` for review. The automated test workflow is configured, but its result must be checked in GitHub Actions; the test suite was not run locally during this editing session.
