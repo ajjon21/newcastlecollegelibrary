@@ -33,9 +33,4 @@ Run the test suite from `newcastle-college-library`:
 ```bash
 python -m unittest discover -s tests -v
 ```
-
-The Git history records actual changes as they are made. The development log distinguishes completed work from future suggestions; it is not a claim that planned work has already happened.
-
-## Safety
-
-This is a teaching prototype, not a production college system. Use synthetic demo data only. Never commit student records, generated database files, passwords, API keys or other secrets. Review authentication, authorisation, privacy, CSRF protection, backups and deployment configuration before any real-world use.
+ReadMe will be redone for final system build.
